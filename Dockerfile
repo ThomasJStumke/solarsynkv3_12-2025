@@ -1,16 +1,19 @@
-# Home Assistant required build argument
-ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.18
-FROM $BUILD_FROM
+# Home Assistant required build argument (Supervisor will supply this)
+ARG BUILD_FROM
+FROM ${BUILD_FROM}
 
 LABEL \
     io.hass.name="SolarSynkV3" \
     io.hass.description="SolarSynk V3 Add-on" \
-    io.hass.arch="amd64" \
     io.hass.type="addon" \
     maintainer="Thomas Stumke"
 
 # Install requirements for add-on
-RUN apk update && \
+# Add retry logic because Alpine CDN sometimes returns "temporary error (try again later)"
+RUN set -eux; \
+    for i in 1 2 3 4 5; do \
+      apk update && break || sleep 5; \
+    done; \
     apk add --no-cache \
         python3 \
         py3-pip \
